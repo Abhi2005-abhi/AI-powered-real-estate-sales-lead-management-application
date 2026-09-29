@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Phone, CheckCircle, Clock } from 'lucide-react';
-import apiClient from '../utils/apiClient';
+import { apiClient } from '../utils/apiClient';
 
 const FollowUp = () => {
     const [followUps, setFollowUps] = useState([]);
