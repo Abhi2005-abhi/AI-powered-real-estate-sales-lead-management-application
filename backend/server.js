@@ -5,11 +5,14 @@ const connectDB = require('./src/config/db');
 
 dotenv.config();
 
-// Initialize MongoDB Atlas
-connectDB();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize MongoDB Atlas via Middleware for Vercel Cloud Serverless Environments
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Dynamic cors origins mapping Vercel UI safely
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -47,7 +50,10 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     message: 'Real Estate Lead Management API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    env_mongodb: !!process.env.MONGODB_URI,
+    env_gemini: !!process.env.GEMINI_API_KEY,
+    env_origins: !!process.env.ALLOWED_ORIGINS
   });
 });
 
