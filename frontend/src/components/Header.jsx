@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Bell, Searchend } from 'lucide-react';
+import { User, Bell } from 'lucide-react';
 
 const Header = () => {
     return (
