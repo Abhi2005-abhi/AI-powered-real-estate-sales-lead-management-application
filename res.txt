@@ -1,0 +1,1 @@
+{"id":"LD-4185","customerName":"Test","location":"Test","propertyRequirement":"Test","budget":"Test","timeline":"Test","customerMessage":"Test","status":"New","priority":"Unanalyzed","intent":"Pending AI Analysis","recommendedAction":"Awaiting constraints analysis","followUpStatus":"Follow-up Needed","createdAt":"2026-09-29T20:20:55.858Z"}
