@@ -22,6 +22,7 @@ const connectDB = async () => {
         console.log('MongoDB Cluster Connection Handshake Operational.');
     } catch (error) {
         console.error('MongoDB database thread initialization error:', error.message);
+        throw error;
     }
 };
 

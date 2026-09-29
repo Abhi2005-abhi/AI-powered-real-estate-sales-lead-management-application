@@ -10,8 +10,12 @@ const PORT = process.env.PORT || 5000;
 
 // Initialize MongoDB Atlas via Middleware for Vercel Cloud Serverless Environments
 app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(503).json({ message: "Database Initialization Failure", error: err.message });
+  }
 });
 
 // Dynamic cors origins mapping Vercel UI safely
@@ -53,7 +57,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     env_mongodb: !!process.env.MONGODB_URI,
     env_gemini: !!process.env.GEMINI_API_KEY,
-    env_origins: !!process.env.ALLOWED_ORIGINS
+    env_origins: !!process.env.ALLOWED_ORIGINS,
+    mongo_status: require('mongoose').connection.readyState
   });
 });
 
