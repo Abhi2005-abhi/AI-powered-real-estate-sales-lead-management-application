@@ -1,8 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDB = require('./src/config/db');
 
 dotenv.config();
+
+// Initialize MongoDB Atlas
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

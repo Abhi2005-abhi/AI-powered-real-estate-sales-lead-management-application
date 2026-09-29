@@ -2,36 +2,24 @@ const { analyzeLeadWithGemini, generateChatResponse, generateFollowUpStrategy } 
 const { buildAnalysisPrompt } = require('../prompts/leadAnalysisPrompt');
 const { buildChatPrompt } = require('../prompts/leadChatPrompt');
 const { buildFollowUpPrompt } = require('../prompts/leadFollowUpPrompt');
+const Lead = require('../models/Lead');
+const mongoose = require('mongoose');
 
-let leads = [
-    {
-        id: "LD-1001",
-        customerName: "Sarah Jenkins",
-        location: "Downtown Seattle",
-        propertyRequirement: "3 BHK Apartment",
-        budget: "$850k",
-        timeline: "Within 1 month",
-        customerMessage: "Hi, I'm looking for a premium apartment.",
-        status: "New",
-        priority: "Unanalyzed",
-        intent: "Pending AI Analysis",
-        recommendedAction: "Awaiting constraints analysis",
-        followUpStatus: "Follow-up Needed",
-        createdAt: new Date().toISOString()
-    }
-];
-
-const getAllLeads = (req, res) => {
+const getAllLeads = async (req, res) => {
     try {
+        const leads = await Lead.find().sort({ createdAt: -1 });
         res.status(200).json(leads);
     } catch (e) {
         res.status(500).json({ message: "Internal server error retrieving leads." });
     }
 };
 
-const getLeadById = (req, res) => {
+const getLeadById = async (req, res) => {
     try {
-        const lead = leads.find(l => l.id === req.params.id);
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+        }
+        const lead = await Lead.findById(req.params.id);
         if (!lead) return res.status(404).json({ message: 'Lead not found.' });
         res.status(200).json(lead);
     } catch (e) {
@@ -39,11 +27,10 @@ const getLeadById = (req, res) => {
     }
 };
 
-const createLead = (req, res) => {
+const createLead = async (req, res) => {
     try {
         const { customerName, location, propertyRequirement, budget, timeline, customerMessage } = req.body;
 
-        // Explicit Validation Rules mapping HTTP 400
         if (!customerName || customerName.trim() === '') return res.status(400).json({ message: 'Customer Name is required.' });
         if (!location || location.trim() === '') return res.status(400).json({ message: 'Location is required.' });
         if (!propertyRequirement || propertyRequirement.trim() === '') return res.status(400).json({ message: 'Property Requirement is required.' });
@@ -51,23 +38,15 @@ const createLead = (req, res) => {
         if (!timeline || timeline.trim() === '') return res.status(400).json({ message: 'Timeline is required.' });
         if (!customerMessage || customerMessage.trim() === '') return res.status(400).json({ message: 'Customer message cannot be empty.' });
 
-        const newLead = {
-            id: `LD-${Math.floor(1000 + Math.random() * 9000)}`,
+        const newLead = await Lead.create({
             customerName,
             location,
             propertyRequirement,
             budget,
             timeline,
-            customerMessage,
-            status: "New",
-            priority: "Unanalyzed",
-            intent: "Pending AI Analysis",
-            recommendedAction: "Awaiting constraints analysis",
-            followUpStatus: "Follow-up Needed",
-            createdAt: new Date().toISOString()
-        };
+            customerMessage
+        });
 
-        leads.push(newLead);
         res.status(201).json(newLead);
     } catch (e) {
         res.status(500).json({ message: "Server error occurred while creating lead." });
@@ -75,30 +54,28 @@ const createLead = (req, res) => {
 };
 
 const analyzeLead = async (req, res) => {
-    const { id } = req.params;
-    const leadIndex = leads.findIndex(l => l.id === id);
-
-    if (leadIndex === -1) {
-        return res.status(404).json({ message: 'Lead not found.' });
-    }
-
-    const targetLead = leads[leadIndex];
-    const promptText = buildAnalysisPrompt(targetLead);
-
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+        }
+
+        const targetLead = await Lead.findById(req.params.id);
+        if (!targetLead) {
+            return res.status(404).json({ message: 'Lead not found.' });
+        }
+
+        const promptText = buildAnalysisPrompt(targetLead);
         const analysis = await analyzeLeadWithGemini(promptText);
 
-        const updatedLead = {
-            ...targetLead,
-            ...analysis,
-            status: "Analyzed"
-        };
-
-        leads[leadIndex] = updatedLead;
+        const updatedLead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            { ...analysis, status: "Analyzed" },
+            { new: true, runValidators: true }
+        );
 
         return res.status(200).json({ message: 'Lead analyzed successfully', lead: updatedLead });
     } catch (error) {
-        console.error("Analysis Error Constraint Hit."); // hide native trace
+        console.error("Analysis Error Constraint Hit:", error.message);
         return res.status(503).json({
             message: 'AI Lead Analysis is temporarily unavailable.'
         });
@@ -106,23 +83,24 @@ const analyzeLead = async (req, res) => {
 };
 
 const chatWithLead = async (req, res) => {
-    const { id } = req.params;
-    const { message } = req.body;
-
-    if (!message || message.trim() === '') {
-        return res.status(400).json({ message: "A salesperson message question cannot be empty." });
-    }
-
-    const targetLead = leads.find(l => l.id === id);
-
-    if (!targetLead) {
-        return res.status(404).json({ message: 'Lead not found.' });
-    }
-
-    const promptText = buildChatPrompt(targetLead, message);
-
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+        }
+
+        const { message } = req.body;
+        if (!message || message.trim() === '') {
+            return res.status(400).json({ message: "A salesperson message question cannot be empty." });
+        }
+
+        const targetLead = await Lead.findById(req.params.id);
+        if (!targetLead) {
+            return res.status(404).json({ message: 'Lead not found.' });
+        }
+
+        const promptText = buildChatPrompt(targetLead, message);
         const aiResponse = await generateChatResponse(promptText);
+
         res.status(200).json({ answer: aiResponse });
     } catch (error) {
         return res.status(503).json({
@@ -132,33 +110,56 @@ const chatWithLead = async (req, res) => {
 };
 
 const generateFollowUp = async (req, res) => {
-    const { id } = req.params;
-    const leadIndex = leads.findIndex(l => l.id === id);
-
-    if (leadIndex === -1) {
-        return res.status(404).json({ message: 'Lead not found.' });
-    }
-
-    const targetLead = leads[leadIndex];
-
-    // Prevent multiple generations if already actively generating. This is purely visual mapping on frontend mostly, but we can do a secondary check here.
-    const promptText = buildFollowUpPrompt(targetLead);
-
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+        }
+
+        const targetLead = await Lead.findById(req.params.id);
+        if (!targetLead) {
+            return res.status(404).json({ message: 'Lead not found.' });
+        }
+
+        const promptText = buildFollowUpPrompt(targetLead);
         const followUpPlan = await generateFollowUpStrategy(promptText);
 
-        const updatedLead = {
-            ...targetLead,
-            followUpPlan: followUpPlan,
-            followUpStatus: "Follow-up Needed"
-        };
+        const updatedLead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            { followUpPlan: followUpPlan, followUpStatus: "Follow-up Needed" },
+            { new: true, runValidators: true }
+        );
 
-        leads[leadIndex] = updatedLead;
         return res.status(200).json({ message: 'Follow-up strategy generated successfully', lead: updatedLead });
     } catch (error) {
         return res.status(503).json({
             message: 'AI strategizing models are temporarily unresponsive.'
         });
+    }
+};
+
+const updateLead = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id))
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+
+        const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        if (!lead) return res.status(404).json({ message: 'Lead not found.' });
+        res.status(200).json(lead);
+    } catch (e) {
+        res.status(500).json({ message: "Internal server error." });
+    }
+};
+
+const deleteLead = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id))
+            return res.status(404).json({ message: 'Invalid Lead ID Format.' });
+
+        const lead = await Lead.findByIdAndDelete(req.params.id);
+        if (!lead) return res.status(404).json({ message: 'Lead not found.' });
+        res.status(200).json({ message: 'Lead deleted successfully.' });
+    } catch (e) {
+        res.status(500).json({ message: "Internal server error." });
     }
 };
 
@@ -169,5 +170,6 @@ module.exports = {
     analyzeLead,
     chatWithLead,
     generateFollowUp,
-    leads
+    updateLead,
+    deleteLead
 };
