@@ -1,9 +1,10 @@
 const isProd = import.meta.env.MODE === 'production';
-const fallbackUrl = isProd
-    ? 'https://ai-powered-real-estate-sales-lead-m-kappa.vercel.app'
-    : 'http://localhost:5000';
+const fallbackUrl = 'https://ai-powered-real-estate-sales-lead-m-kappa.vercel.app';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || fallbackUrl;
+// Strictly bind the domain in production to prevent mixed-content localhost fetch errors resulting from bad Vercel Env configurations
+const API_BASE_URL = isProd
+    ? fallbackUrl
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000');
 
 class ApiError extends Error {
     constructor(message, status) {
