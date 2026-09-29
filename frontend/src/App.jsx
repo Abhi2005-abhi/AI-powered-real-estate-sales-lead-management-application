@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import AddLead from './pages/AddLead';
 import LeadDetails from './pages/LeadDetails';
+import FollowUp from './pages/FollowUp';
 
 function App() {
     return (
@@ -18,7 +19,7 @@ function App() {
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/add-lead" element={<AddLead />} />
                             <Route path="/leads/:id" element={<LeadDetails />} />
-                            {/* Standalone Route Removed. Chat injected directly inside lead details. */}
+                            <Route path="/follow-up" element={<FollowUp />} />
                         </Routes>
                     </main>
                 </div>
