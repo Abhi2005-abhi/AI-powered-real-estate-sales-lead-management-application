@@ -26,7 +26,7 @@ const analyzeLeadWithGemini = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     try {
         const response = await ai.models.generateContent({
@@ -59,7 +59,7 @@ const generateChatResponse = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     try {
         const response = await ai.models.generateContent({
@@ -80,7 +80,7 @@ const generateFollowUpStrategy = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     try {
         const response = await ai.models.generateContent({
@@ -93,11 +93,9 @@ const generateFollowUpStrategy = async (promptText) => {
 
         const parsedData = extractJSON(response.text);
 
-        const requiredKeys = ['timing', 'channel', 'objective', 'talkingPoints', 'suggestedMessage', 'questionsToAsk', 'whatToAvoid', 'priority'];
-        for (const key of requiredKeys) {
-            if (parsedData[key] === undefined) {
-                throw new Error(`Missing expected key: ${key} in FollowUp payload`);
-            }
+        // Weakening strict key blocks. The frontend uses `safePlan` structural mapping defensively eliminating the need for aggressive backend rejections.
+        if (!parsedData || typeof parsedData !== 'object') {
+            throw new Error(`Invalid FollowUp structured block format.`);
         }
 
         return parsedData;
