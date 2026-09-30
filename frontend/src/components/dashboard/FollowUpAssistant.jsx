@@ -7,15 +7,23 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
     const [status, setStatus] = useState(currentStatus || 'Follow-up Needed'); // 'Follow-up Needed' | 'Follow-up Planned' | 'Contacted'
     const [generating, setGenerating] = useState(false);
 
+    const toStr = (val, fallback) => {
+        if (val === null || val === undefined) return fallback;
+        if (typeof val === 'object') return fallback;
+        return String(val) || fallback;
+    };
+    const toStrArray = (val) =>
+        Array.isArray(val) ? val.map((item) => (typeof item === 'object' ? JSON.stringify(item) : String(item))) : [];
+
     const safePlan = {
-        timing: plan?.timing || 'Pending',
-        channel: plan?.channel || 'Pending',
-        objective: plan?.objective || 'Pending Analysis',
-        talkingPoints: Array.isArray(plan?.talkingPoints) ? plan.talkingPoints : [],
-        suggestedMessage: plan?.suggestedMessage || (typeof plan === 'string' ? plan : 'No message generated'),
-        questionsToAsk: Array.isArray(plan?.questionsToAsk) ? plan.questionsToAsk : [],
-        whatToAvoid: Array.isArray(plan?.whatToAvoid) ? plan.whatToAvoid : [],
-        priority: plan?.priority || 'WARM'
+        timing: toStr(plan?.timing, 'Pending'),
+        channel: toStr(plan?.channel, 'Pending'),
+        objective: toStr(plan?.objective, 'Pending Analysis'),
+        talkingPoints: toStrArray(plan?.talkingPoints),
+        suggestedMessage: toStr(plan?.suggestedMessage, typeof plan === 'string' ? plan : 'No message generated'),
+        questionsToAsk: toStrArray(plan?.questionsToAsk),
+        whatToAvoid: toStrArray(plan?.whatToAvoid),
+        priority: toStr(plan?.priority, 'WARM'),
     };
 
     const handleCopy = () => {
