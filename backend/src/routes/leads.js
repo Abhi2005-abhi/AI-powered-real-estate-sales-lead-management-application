@@ -17,22 +17,24 @@ router.delete('/:id', leadController.deleteLead);
 router.put('/:id', leadController.updateLead);
 
 // TEMPORARY DEBUG ROUTE
-router.get('/debug/test', (req, res) => {
-    const https = require('https');
-    https.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`, (resp) => {
-        let data = '';
-        resp.on('data', (chunk) => { data += chunk; });
-        resp.on('end', () => {
-            try {
-                const parsed = JSON.parse(data);
-                res.json({ success: true, models: parsed.models?.map(m => m.name) || parsed });
-            } catch (e) {
-                res.json({ success: false, error: e.message, data });
-            }
+router.post('/debug/test', async (req, res) => {
+    try {
+        const { GoogleGenAI } = require('@google/genai');
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: req.body.message || "Hello"
         });
-    }).on("error", (err) => {
-        res.json({ success: false, error: err.message });
-    });
+        res.json({
+            success: true,
+            typeof_text: typeof response.text,
+            isFunction: typeof response.text === 'function',
+            val: typeof response.text === 'function' ? response.text() : response.text,
+            rawKeys: Object.keys(response)
+        });
+    } catch (e) {
+        res.json({ success: false, error: e.message, stack: e.stack });
+    }
 });
 
 module.exports = router;

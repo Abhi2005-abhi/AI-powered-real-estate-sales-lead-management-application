@@ -26,7 +26,7 @@ const analyzeLeadWithGemini = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
         const response = await ai.models.generateContent({
@@ -59,7 +59,7 @@ const generateChatResponse = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
         const response = await ai.models.generateContent({
@@ -80,7 +80,7 @@ const generateFollowUpStrategy = async (promptText) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
         const response = await ai.models.generateContent({
