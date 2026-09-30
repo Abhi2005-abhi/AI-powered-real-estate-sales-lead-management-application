@@ -1,25 +1,43 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
+
+function extractJSON(text) {
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        let cleanText = text;
+        if (cleanText.includes('```json')) {
+            cleanText = cleanText.split('```json')[1].split('```')[0].trim();
+        } else if (cleanText.includes('```')) {
+            cleanText = cleanText.split('```')[1].split('```')[0].trim();
+        }
+
+        const start = cleanText.indexOf('{');
+        const end = cleanText.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end >= start) {
+            cleanText = cleanText.substring(start, end + 1);
+        }
+        return JSON.parse(cleanText);
+    }
+}
 
 const analyzeLeadWithGemini = async (promptText) => {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
-        const result = await model.generateContent(promptText);
-        const response = await result.response;
-        let text = response.text();
+        const response = await ai.models.generateContent({
+            model: modelId,
+            contents: promptText,
+            config: {
+                responseMimeType: 'application/json'
+            }
+        });
 
-        if (text.includes('```json')) {
-            text = text.split('```json')[1].split('```')[0].trim();
-        } else if (text.includes('```')) {
-            text = text.split('```')[1].split('```')[0].trim();
-        }
-
-        const parsedData = JSON.parse(text);
+        const parsedData = extractJSON(response.text);
 
         const requiredKeys = ['summary', 'intent', 'keyRequirements', 'objections', 'recommendedNextAction', 'suggestedResponse', 'leadScore', 'priority', 'urgency', 'scoringSignals'];
         for (const key of requiredKeys) {
@@ -30,49 +48,50 @@ const analyzeLeadWithGemini = async (promptText) => {
 
         return parsedData;
     } catch (error) {
-        console.error("AI service error:", error);
-        throw new Error('Gemini analysis failed or returned malformed data.');
+        console.error("AI service error - analyzeLeadWithGemini:", error);
+        throw new Error('Gemini analysis failed: ' + (error.message || 'Malformed structured payload'));
     }
 };
 
 const generateChatResponse = async (promptText) => {
     if (!process.env.GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY environment variable is not set.');
+        throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
-        const result = await model.generateContent(promptText);
-        const response = await result.response;
-        return response.text().trim();
+        const response = await ai.models.generateContent({
+            model: modelId,
+            contents: promptText
+        });
+
+        return response.text.trim();
     } catch (error) {
         console.error('AI chat processing error:', error);
-        throw new Error('Failed to generate response from Gemini chat model.');
+        throw new Error('Failed to generate response from Gemini chat model: ' + error.message);
     }
 };
 
 const generateFollowUpStrategy = async (promptText) => {
     if (!process.env.GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY environment variable is not set.');
+        throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     try {
-        const result = await model.generateContent(promptText);
-        const response = await result.response;
-        let text = response.text();
+        const response = await ai.models.generateContent({
+            model: modelId,
+            contents: promptText,
+            config: {
+                responseMimeType: 'application/json'
+            }
+        });
 
-        if (text.includes('```json')) {
-            text = text.split('```json')[1].split('```')[0].trim();
-        } else if (text.includes('```')) {
-            text = text.split('```')[1].split('```')[0].trim();
-        }
-
-        const parsedData = JSON.parse(text);
+        const parsedData = extractJSON(response.text);
 
         const requiredKeys = ['timing', 'channel', 'objective', 'talkingPoints', 'suggestedMessage', 'questionsToAsk', 'whatToAvoid', 'priority'];
         for (const key of requiredKeys) {
@@ -83,8 +102,8 @@ const generateFollowUpStrategy = async (promptText) => {
 
         return parsedData;
     } catch (error) {
-        console.error("AI service error:", error);
-        throw new Error('Gemini follow-up generation failed or returned malformed data.');
+        console.error("AI service error - generateFollowUpStrategy:", error);
+        throw new Error('Gemini follow-up generation failed: ' + (error.message || 'JSON structure compromised'));
     }
 };
 

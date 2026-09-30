@@ -16,6 +16,7 @@ const LeadDetails = () => {
     // AI Resolution State
     const [analyzing, setAnalyzing] = useState(false);
     const [analyzeError, setAnalyzeError] = useState(null);
+    const [followUpError, setFollowUpError] = useState(null);
     const [copied, setCopied] = useState(false);
 
     // Chat AI State (Section 7)
@@ -68,11 +69,13 @@ const LeadDetails = () => {
     };
 
     const handleGenerateFollowUp = async () => {
+        setFollowUpError(null);
         try {
             const data = await apiClient.post(`/api/leads/${id}/follow-up`);
             setLead(data.lead);
         } catch (err) {
-            console.error(err);
+            console.error("Follow-up error:", err);
+            setFollowUpError(err.message || "Failed to establish AI logic paths.");
         }
     };
 
@@ -302,6 +305,7 @@ const LeadDetails = () => {
                                 leadId={lead.id}
                                 plan={lead.followUpPlan}
                                 currentStatus={lead.followUpStatus}
+                                error={followUpError}
                                 onRefresh={handleGenerateFollowUp}
                                 onAnalyze={handleAnalyze}
                             />

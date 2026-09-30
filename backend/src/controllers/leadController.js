@@ -76,8 +76,10 @@ const analyzeLead = async (req, res) => {
         return res.status(200).json({ message: 'Lead analyzed successfully', lead: updatedLead });
     } catch (error) {
         console.error("Analysis Error Constraint Hit:", error.message);
-        return res.status(503).json({
-            message: 'AI Lead Analysis is temporarily unavailable.'
+        return res.status(502).json({
+            success: false,
+            message: 'Gemini lead analysis failed',
+            error: error.message
         });
     }
 };
@@ -103,8 +105,11 @@ const chatWithLead = async (req, res) => {
 
         res.status(200).json({ answer: aiResponse });
     } catch (error) {
-        return res.status(503).json({
-            message: 'Conversational agent is temporarily unavailable. Please try again.'
+        console.error("Chat Agent Error:", error.message);
+        return res.status(502).json({
+            success: false,
+            message: 'Conversational agent query failed',
+            error: error.message
         });
     }
 };
@@ -131,8 +136,11 @@ const generateFollowUp = async (req, res) => {
 
         return res.status(200).json({ message: 'Follow-up strategy generated successfully', lead: updatedLead });
     } catch (error) {
-        return res.status(503).json({
-            message: 'AI strategizing models are temporarily unresponsive.'
+        console.error("Follow-Up Generation Error:", error.message);
+        return res.status(502).json({
+            success: false,
+            message: 'Gemini follow-up generation failed',
+            error: error.message
         });
     }
 };

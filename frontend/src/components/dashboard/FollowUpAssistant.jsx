@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Bot, Copy, Check, RefreshCw, CalendarCheck, AlertTriangle, MessageSquare, Clock, HelpCircle, CheckCircle2 } from 'lucide-react';
 import PriorityBadge from './PriorityBadge';
 
-const FollowUpAssistant = ({ leadId, plan, currentStatus, onRefresh, onAnalyze }) => {
+const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAnalyze }) => {
     const [copied, setCopied] = useState(false);
     const [status, setStatus] = useState(currentStatus || 'Follow-up Needed'); // 'Follow-up Needed' | 'Follow-up Planned' | 'Contacted'
     const [generating, setGenerating] = useState(false);
@@ -34,7 +34,7 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, onRefresh, onAnalyze }
         }
     };
 
-    if (!plan && !generating) {
+    if (!plan && !generating && !error) {
         return (
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
                 <div className="bg-indigo-100 p-3 rounded-full mb-3">
@@ -61,6 +61,19 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, onRefresh, onAnalyze }
         );
     }
 
+    if (error) {
+        return (
+            <div className="bg-red-50/50 rounded-2xl p-8 border border-red-100 shadow-sm flex flex-col items-center justify-center text-center">
+                <AlertTriangle className="w-8 h-8 text-red-500 mb-4" />
+                <h3 className="text-lg font-semibold text-red-800">Generation Failed</h3>
+                <p className="text-sm font-medium text-red-600 max-w-lg mt-2 mb-4">{error}</p>
+                <button onClick={handleRegenerate} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
+                    Try Again
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
             {/* Sticky Header Action Block */}
@@ -72,8 +85,8 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, onRefresh, onAnalyze }
                     </h2>
                     <div className="flex items-center gap-2 text-xs font-semibold">
                         <span className={`px-2 py-0.5 rounded-md border ${status === 'Contacted' ? 'bg-green-50 border-green-200 text-green-700' :
-                                status === 'Follow-up Planned' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                    'bg-amber-50 border-amber-200 text-amber-700'
+                            status === 'Follow-up Planned' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                'bg-amber-50 border-amber-200 text-amber-700'
                             }`}>
                             {status}
                         </span>
