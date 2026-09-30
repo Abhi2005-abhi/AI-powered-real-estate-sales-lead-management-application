@@ -7,9 +7,20 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
     const [status, setStatus] = useState(currentStatus || 'Follow-up Needed'); // 'Follow-up Needed' | 'Follow-up Planned' | 'Contacted'
     const [generating, setGenerating] = useState(false);
 
+    const safePlan = {
+        timing: plan?.timing || 'Pending',
+        channel: plan?.channel || 'Pending',
+        objective: plan?.objective || 'Pending Analysis',
+        talkingPoints: Array.isArray(plan?.talkingPoints) ? plan.talkingPoints : [],
+        suggestedMessage: plan?.suggestedMessage || (typeof plan === 'string' ? plan : 'No message generated'),
+        questionsToAsk: Array.isArray(plan?.questionsToAsk) ? plan.questionsToAsk : [],
+        whatToAvoid: Array.isArray(plan?.whatToAvoid) ? plan.whatToAvoid : [],
+        priority: plan?.priority || 'WARM'
+    };
+
     const handleCopy = () => {
-        if (plan?.suggestedMessage) {
-            navigator.clipboard.writeText(plan.suggestedMessage);
+        if (safePlan.suggestedMessage) {
+            navigator.clipboard.writeText(safePlan.suggestedMessage);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
@@ -91,7 +102,7 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
                             {status}
                         </span>
                         <span className="text-slate-300">•</span>
-                        <PriorityBadge priority={plan.priority} />
+                        <PriorityBadge priority={safePlan.priority} />
                     </div>
                 </div>
 
@@ -116,23 +127,23 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white rounded-lg p-3 shadow-sm border border-indigo-50/50">
                                 <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1"><Clock className="w-3.5 h-3.5" /> Timing</p>
-                                <p className="text-slate-800 text-sm font-medium">{plan.timing}</p>
+                                <p className="text-slate-800 text-sm font-medium">{safePlan.timing}</p>
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm border border-indigo-50/50">
                                 <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1"><MessageSquare className="w-3.5 h-3.5" /> Channel</p>
-                                <p className="text-slate-800 text-sm font-medium">{plan.channel}</p>
+                                <p className="text-slate-800 text-sm font-medium">{safePlan.channel}</p>
                             </div>
                         </div>
                         <div className="mt-4 bg-white rounded-lg p-3 shadow-sm border border-indigo-50/50">
                             <p className="text-xs font-semibold text-slate-500 mb-1">Primary Objective</p>
-                            <p className="text-slate-800 text-sm font-medium">{plan.objective}</p>
+                            <p className="text-slate-800 text-sm font-medium">{safePlan.objective}</p>
                         </div>
                     </div>
 
                     <div>
                         <p className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-3"><CheckCircle2 className="w-4 h-4 text-green-500" /> Talking Points</p>
                         <ul className="space-y-2">
-                            {plan.talkingPoints.map((point, idx) => (
+                            {safePlan.talkingPoints.map((point, idx) => (
                                 <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
                                     <span className="text-green-500 font-bold mt-0.5">•</span> <span>{point}</span>
                                 </li>
@@ -150,7 +161,7 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
                             </button>
                         </div>
                         <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 font-serif leading-relaxed border border-slate-200 shadow-inner whitespace-pre-wrap">
-                            {plan.suggestedMessage}
+                            {safePlan.suggestedMessage}
                         </div>
                     </div>
 
@@ -158,7 +169,7 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
                         <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                             <p className="flex items-center gap-2 text-xs font-bold text-blue-800 uppercase tracking-wider mb-3"><HelpCircle className="w-3.5 h-3.5" /> What to ask</p>
                             <ul className="space-y-1.5">
-                                {plan.questionsToAsk.map((q, idx) => (
+                                {safePlan.questionsToAsk.map((q, idx) => (
                                     <li key={idx} className="text-xs text-blue-900 border-b border-blue-100/50 pb-1.5 last:border-0 last:pb-0">{q}</li>
                                 ))}
                             </ul>
@@ -167,7 +178,7 @@ const FollowUpAssistant = ({ leadId, plan, currentStatus, error, onRefresh, onAn
                         <div className="bg-red-50/50 p-4 rounded-xl border border-red-100">
                             <p className="flex items-center gap-2 text-xs font-bold text-red-800 uppercase tracking-wider mb-3"><AlertTriangle className="w-3.5 h-3.5" /> What NOT to do</p>
                             <ul className="space-y-1.5">
-                                {plan.whatToAvoid.map((rule, idx) => (
+                                {safePlan.whatToAvoid.map((rule, idx) => (
                                     <li key={idx} className="text-xs text-red-900 border-b border-red-100/50 pb-1.5 last:border-0 last:pb-0">{rule}</li>
                                 ))}
                             </ul>
