@@ -17,15 +17,22 @@ router.delete('/:id', leadController.deleteLead);
 router.put('/:id', leadController.updateLead);
 
 // TEMPORARY DEBUG ROUTE
-router.get('/debug/test', async (req, res) => {
-    try {
-        const fetch = require('node-fetch') || global.fetch;
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
-        const data = await response.json();
-        res.json({ success: true, models: data.models?.map(m => m.name) || data });
-    } catch (e) {
-        res.json({ success: false, error: e.message });
-    }
+router.get('/debug/test', (req, res) => {
+    const https = require('https');
+    https.get(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`, (resp) => {
+        let data = '';
+        resp.on('data', (chunk) => { data += chunk; });
+        resp.on('end', () => {
+            try {
+                const parsed = JSON.parse(data);
+                res.json({ success: true, models: parsed.models?.map(m => m.name) || parsed });
+            } catch (e) {
+                res.json({ success: false, error: e.message, data });
+            }
+        });
+    }).on("error", (err) => {
+        res.json({ success: false, error: err.message });
+    });
 });
 
 module.exports = router;
