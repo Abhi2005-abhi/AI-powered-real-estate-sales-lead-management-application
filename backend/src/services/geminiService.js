@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 function extractJSON(text) {
     try {
@@ -25,19 +25,16 @@ const analyzeLeadWithGemini = async (promptText) => {
         throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        generationConfig: { responseMimeType: 'application/json' }
+    });
 
     try {
-        const response = await ai.models.generateContent({
-            model: modelId,
-            contents: promptText,
-            config: {
-                responseMimeType: 'application/json'
-            }
-        });
-
-        const parsedData = extractJSON(response.text);
+        const result = await model.generateContent(promptText);
+        const response = await result.response;
+        const parsedData = extractJSON(response.text());
 
         const requiredKeys = ['summary', 'intent', 'keyRequirements', 'objections', 'recommendedNextAction', 'suggestedResponse', 'leadScore', 'priority', 'urgency', 'scoringSignals'];
         for (const key of requiredKeys) {
@@ -58,16 +55,13 @@ const generateChatResponse = async (promptText) => {
         throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash" });
 
     try {
-        const response = await ai.models.generateContent({
-            model: modelId,
-            contents: promptText
-        });
-
-        return response.text.trim();
+        const result = await model.generateContent(promptText);
+        const response = await result.response;
+        return response.text().trim();
     } catch (error) {
         console.error('AI chat processing error:', error);
         throw new Error('Failed to generate response from Gemini chat model: ' + error.message);
@@ -79,21 +73,17 @@ const generateFollowUpStrategy = async (promptText) => {
         throw new Error('GEMINI_API_KEY environment variable is not set. Please configure the backend.');
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const modelId = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        generationConfig: { responseMimeType: 'application/json' }
+    });
 
     try {
-        const response = await ai.models.generateContent({
-            model: modelId,
-            contents: promptText,
-            config: {
-                responseMimeType: 'application/json'
-            }
-        });
+        const result = await model.generateContent(promptText);
+        const response = await result.response;
+        const parsedData = extractJSON(response.text());
 
-        const parsedData = extractJSON(response.text);
-
-        // Weakening strict key blocks. The frontend uses `safePlan` structural mapping defensively eliminating the need for aggressive backend rejections.
         if (!parsedData || typeof parsedData !== 'object') {
             throw new Error(`Invalid FollowUp structured block format.`);
         }
