@@ -1,0 +1,3 @@
+HEALTH: 503
+CREATE STATUS: 503
+CREATE RETURNED NO ID: {"message":"Database Initialization Failure","error":"bad auth : authentication failed"}

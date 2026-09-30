@@ -31,7 +31,7 @@ The application follows a decoupled two-tier architecture:
 
 ## 5. Gemini API Explanation
 
-The backend imports `GoogleGenerativeAI`, initializes it with the server-side API Key, and gets an instance of the `"gemini-1.5-flash"` model. We use `generateContent(promptText)` to get the response. For analysis and follow-up, the system strictly parses the `response.text()` as JSON, cleaning off markdown tags, and throwing validation errors if the AI omits required keys (like `leadScore` or `intent`).
+The backend imports `GoogleGenerativeAI`, initializes it with the server-side API Key, and gets an instance of the `"gemini-2.5-flash"` model. We use `generateContent(promptText)` to get the response. For analysis and follow-up, the system strictly parses the `response.text()` as JSON, cleaning off markdown tags, and throwing validation errors if the AI omits required keys (like `leadScore` or `intent`).
 
 ## 6. Prompt Engineering Explanation
 
