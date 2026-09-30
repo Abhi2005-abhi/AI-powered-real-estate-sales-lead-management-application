@@ -27,7 +27,7 @@ const analyzeLeadWithGemini = async (promptText) => {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
         generationConfig: { responseMimeType: 'application/json' }
     });
 
@@ -75,7 +75,7 @@ const generateFollowUpStrategy = async (promptText) => {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
         generationConfig: { responseMimeType: 'application/json' }
     });
 
