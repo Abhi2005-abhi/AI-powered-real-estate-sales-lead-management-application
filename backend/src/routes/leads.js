@@ -22,15 +22,12 @@ router.post('/debug/test', async (req, res) => {
         const { GoogleGenAI } = require('@google/genai');
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash",
             contents: req.body.message || "Hello"
         });
         res.json({
             success: true,
-            typeof_text: typeof response.text,
-            isFunction: typeof response.text === 'function',
-            val: typeof response.text === 'function' ? response.text() : response.text,
-            rawKeys: Object.keys(response)
+            raw: JSON.stringify(response, Object.getOwnPropertyNames(response)) // Get everything including non-enumerable
         });
     } catch (e) {
         res.json({ success: false, error: e.message, stack: e.stack });
