@@ -25,10 +25,12 @@ const handleResponse = async (response) => {
         if (response.status === 429) {
             errorMessage = 'You are making too many requests. Please slow down and try again.';
         } else if (response.status >= 500) {
-            if (errorMessage.includes("API_KEY") || response.status === 503) {
+            if (data?.error) {
+                errorMessage = `${data.message || 'Server Error'}: ${data.error}`;
+            } else if (errorMessage.includes("API_KEY") || response.status === 503) {
                 errorMessage = 'AI analysis is temporarily unavailable. Please try again later.';
             } else {
-                errorMessage = 'The server encountered an error processing your request. Please try again.';
+                errorMessage = data?.message || 'The server encountered an error processing your request. Please try again.';
             }
         }
 
